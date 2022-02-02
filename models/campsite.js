@@ -59,5 +59,7 @@ const campsiteSchema = new Schema({
 // Convert the campsiteSchema into a model
 // Generate a Model
 // Desugared class because mongoose was written before ES6 Classes 
+// first arg: Mongoose automatically looks for the plural, lowercased version of your model name
+// 'Campsite' = 'campsites'
 const Campsite = mongoose.model('Campsite', campsiteSchema); // returns a constructor fn
 module.exports = Campsite; 

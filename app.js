@@ -1,15 +1,18 @@
+// Module imports 
 const createError = require('http-errors');
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 
+// Router imports
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const campsiteRouter = require('./routes/campsiteRouter');
 const promotionRouter = require('./routes/promotionRouter');
 const partnerRouter = require('./routes/partnerRouter');
 
+// Setup express instance
 const app = express();
 
 // view engine setup
