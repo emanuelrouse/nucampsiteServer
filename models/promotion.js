@@ -16,7 +16,8 @@ const promotionSchema = new Schema({
     },
     featured: {
         type: Boolean,
-        required: true
+        // Best to set a default here to ensure we're not storing undefind || null on a Boolean
+        default: false
     },
     cost: {
         type: Currency,

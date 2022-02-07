@@ -7,6 +7,7 @@ promotionRouter.route('/')
         Promotion.find()
             .then((promotions) => {
                 res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json');
                 res.json(promotions);
             })
             .catch(err => next(err));
@@ -14,23 +15,23 @@ promotionRouter.route('/')
     .post((req, res) => {
         Promotion.create(req.body)
             .then((promotion) => {
+                console.log('Promotion Created ', promotion);
                 res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json');
                 res.json(promotion);
-                promotion.save();
             })
-            .catch(err => {
-                // How should I handle this error properly?
-                console.log(err); res.end()
-            });
+            .catch(err => next(err));
     })
     .put((req, res) => {
+        // put is not supported here because we wouldn't want to update the whole array of partners
         res.statusCode = 403;
         res.end('PUT operation not supported on /promotions');
     })
     .delete((req, res) => {
         Promotion.deleteMany()
-            .then((response) => {
+            .then(response => {
                 res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json');
                 res.json(response);
             })
             .catch(err => next(err));
@@ -39,49 +40,37 @@ promotionRouter.route('/')
 promotionRouter.route('/:promotionsId')
     .get((req, res, next) => {
         Promotion.findById(req.params.promotionsId)
-            .then((promotion) => {
-                if (promotion["_id"] == req.params.promotionsId) {
-                    res.statusCode = 200;
-                    res.setHeader('Content-Type', 'application/json');
-                    res.json(promotion);
-                } else {
-                    res.statusCode = 400;
-                    res.json(`promotions/${req.params.promotionsId} not found.`)
-                }
+            .then(promotion => {
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json');
+                res.json(promotion);
             })
             .catch(err => next(err));
     })
     .post((req, res) => {
         res.statusCode = 403; // forbidden
-        res.end(`POST operation not supported on /promotions/${req.params.promotionsId}`) // send a message back to the client
+        res.end(`POST operation not supported on /promotions/${req.params.promotionsId}`);
     })
-    .put((req, res) => {
-        const update = { ...req.body };
-        // Why does this automatically save? 
-        Promotion.findByIdAndUpdate(`${req.params.promotionsId}`, update)
+    .put((req, res, next) => {
+        Promotion.findByIdAndUpdate(req.params.promotionsId, {
+            $set: req.body
+        }, { new: true })
             .then(promotion => {
-                // How would I check to see if the promotion exists in the collection?
-                // if I pass an incorrect id I get Cannot read property '_id' of null
-                console.log(promotion);
-                promotion.save(); // save is not nessesary. findByIdAndUpdate automatically performimg the save operation?
-                res.end(`Updating the promotion: ${req.params.promotionsId}\n`);
+                // save the promotion document
+                res.statusCode = 200;
+                promotion.save();
+                res.setHeader('Content-Type', 'application/json');
+                res.json(`Updating the promotion: ${req.params.promotionsId}`);
             })
-            .catch(errMess => {
-                // Is my Error handling setup correctly?
-                const err = new Error(errMess);
-                return err;
-            });
+            .catch(err => next(err));
     })
     .delete((req, res) => {
-        // Why doesn't this automatically save?
         Promotion.findByIdAndDelete(`${req.params.promotionsId}`)
-            .then(promotion => {
-                promotion.save();
-                res.end(`Promotion ${req.params.promotionsId} deleted.`);
+            .then(response => {
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json');
+                res.json(response);
             })
-            .catch(err => {
-                next(err);
-            });
+            .catch(err => next(err));
     });
-
 module.exports = promotionRouter;
