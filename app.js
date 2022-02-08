@@ -4,6 +4,8 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
+const session = require('express-session');
+const FileStore = require('session-file-store')(session); // first class functions: require function returns another fn. then call that return fn with this second parameter list of session
 
 // Router imports
 const indexRouter = require('./routes/index');
@@ -23,50 +25,28 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser('helloworld'));
-// function auth(req, res, next) {
-// 	if (!req.signedCookies.user) {
-// 		const authHeader = req.headers.authorization;
-// 		if (!authHeader) {
-// 			const err = new Error('You are not authenticated!');
-// 			res.setHeader('WWW-Authenticate', 'Basic');
-// 			err.status = 401;
-// 			return next(err);
-// 		}
+// app.use(cookieParser('12345-67890-09876-54321')); // Using cookie-parser may result in issues if the secret is not the same between this module and cookie-parser.
 
-// 		const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-// 		const user = auth[0];
-// 		const pass = auth[1];
-// 		if (user === 'admin' && pass === 'password') {
-// 			res.cookie('user', 'admin', { signed: true });
-// 			return next(); // authorized
-// 		} else {
-// 			const err = new Error('You are not authenticated!');
-// 			res.setHeader('WWW-Authenticate', 'Basic');
-// 			err.status = 401;
-// 			return next(err);
-// 		}
-// 	} else {
-// 		if (req.signedCookies.user === 'admin') {
-// 			return next();
-// 		} else {
-// 			const err = new Error('You are not authenticated!');
-// 			err.status = 401;
-// 			return next(err);
-// 		}
-// 	}
-// }
+app.use(session({
+	// options may change depending on use case
+	name: 'session-id',
+	secret: '12345-67890-09876-54321', // secret is the only required parameter, but there are many more you can use. It should be a randomly unique string for your application.
+	saveUninitialized: false, // prevents empty session files and cookies 
+	resave: false, // once a session has been created and updated and save it will continue to resave: helps mark session as active
+	store: new FileStore() // create a new filestore as an object that's used to save the sessions info to the servers hard disk instead of the just the running apps memory
+}))
+
 function auth(req, res, next) {
-	console.log('auth ran')
-	// user has not been authenticated
-	console.log('headers', req.headers);
-	console.log('auth headers', req.headers.authorization);
-	console.log('signed cookies prop', req.signedCookies);
-	console.log('signed cookies user prop', req.signedCookies.user);
+	// session automatically adds a property called session to the requests message
 
-	if (!req.signedCookies.user) {
-		console.log('req headers inside first if: ', req.headers)
-		console.log('inside first if:', req.signedCookies.user);
+	// when the server recieves a cookie from the client, it's able to use the session id stored in that cookie to go into the fileStore and retrieve this info. Then loads info into the req.sessions object
+
+	// The session is attached to the request, so you can access it using req.session
+
+	console.log(req.session);
+
+	if (!req.session.user) {
+		console.log('req headers inside first if: ', req.headers);
 
 		const authHeader = req.headers.authorization;
 		console.log('authHeader inside first if: ', authHeader);
@@ -105,20 +85,14 @@ function auth(req, res, next) {
 
 		// validation
 		if (user === 'admin' && pass === 'password') {
+			// This session object can be used to get data out of the session, and also to set data:
+
+			// This data is serialized as JSON when stored, so you are safe to use nested objects.
+
+			// save to the session that the username is admin
+			req.session.user = 'admin';
 			console.log('correct credentials passed');
 
-			res.cookie('user', 'admin', { signed: true });
-			// res.cookie belongs to express response obj api
-
-			// create a new cookie 
-
-			// pass the name that we want to use for the cookie: user
-
-			//name is used to setup a property of user on the signed cookie object
-
-			// second arguemnt  will be a value to store in the name property: 'admin'
-
-			//third arg[optional] signed true lets express know to use the secret key from cookie parser to create a signed cookie 
 			return next(); // authorized
 		} else {
 			// Unauthorized User
@@ -133,10 +107,10 @@ function auth(req, res, next) {
 			next(err);
 		}
 	} else {
-		// if there is a signedCookie.user value in the income request
+		// if there is a session.user value in the income request
 		// check if value === admin
-		if (req.signedCookies.user === 'admin') {
-			console.log(req.signedCookies.user);
+		if (req.session.user === 'admin') {
+			console.log(req.session.user);
 			return next();
 		} else {
 			const err = new Error('You are not authenticated!');
