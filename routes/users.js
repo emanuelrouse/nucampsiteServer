@@ -30,6 +30,7 @@ usersRouter.route('/signup')
           res.json({ err: err });
         } else {
           // authenticate returns a fn 
+          // Verify callback function
           passport.authenticate('local')(req, res, () => {
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json');
@@ -40,6 +41,7 @@ usersRouter.route('/signup')
     );
   })
 
+// passport.authenticate is the verify callback
 usersRouter.route('/login', passport.authenticate('local'))
   .post((req, res) => {
     // passport reduces the amount of code by a lot
