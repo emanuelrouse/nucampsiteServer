@@ -9,6 +9,8 @@ campsiteRouter.route('/')
 	.get((req, res, next) => {
 		// find returns a query that you can use a .then function on it is NOT a promise
 		Campsite.find()
+			// tell the app that when campsites document are retrieved to populate the author field of the comments subdocument by finding the user document that matches the object id that's stored there
+			.populate('comments.author')
 			.then(campsites => {
 				res.statusCode = 200;
 				res.setHeader('Content-Type', 'application/json');
@@ -44,6 +46,7 @@ campsiteRouter.route('/')
 campsiteRouter.route('/:campsiteId')
 	.get((req, res, next) => {
 		Campsite.findById(req.params.campsiteId)
+			.populate('comments.author')
 			.then(campsite => {
 				res.statusCode = 200;
 				res.setHeader('Content-Type', 'application/json');
@@ -80,6 +83,7 @@ campsiteRouter.route('/:campsiteId/comments')
 	.get((req, res, next) => {
 		// find returns a query that you can use a .then function on it is NOT a promise
 		Campsite.findById(req.params.campsiteId)
+			.populate('comments.author')
 			.then(campsite => {
 				if (campsite) {
 					res.statusCode = 200;
@@ -99,6 +103,8 @@ campsiteRouter.route('/:campsiteId/comments')
 		Campsite.findById(req.params.campsiteId)
 			.then(campsite => {
 				if (campsite) {
+					// ensure that when the comment is saved it will have the id of the user that submitted the comment in the author field
+					req.body.author = req.user._id;
 					campsite.comments.push(req.body);
 					campsite.save()
 						.then(campsite => {
@@ -160,6 +166,7 @@ campsiteRouter.route('/:campsiteId/comments/:commentId')
 	.get((req, res, next) => {
 		// find returns a query that you can use a .then function on it is NOT a promise
 		Campsite.findById(req.params.campsiteId)
+			.populate('comments.author')
 			.then(campsite => {
 				if (campsite && campsite.comments.id(req.params.commentId)) {
 					res.statusCode = 200;
