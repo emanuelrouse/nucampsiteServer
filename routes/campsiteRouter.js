@@ -1,5 +1,6 @@
 const express = require('express');
 const Campsite = require('../models/campsite');
+const authenticate = require('../authenticate');
 
 const campsiteRouter = express.Router();
 
@@ -15,7 +16,7 @@ campsiteRouter.route('/')
 			})
 			.catch(err => next(err));
 	})
-	.post((req, res, next) => {
+	.post(authenticate.verifyUser, (req, res, next) => {
 		// create returns a promise
 		Campsite.create(req.body)
 			.then(campsite => {
@@ -26,11 +27,11 @@ campsiteRouter.route('/')
 			})
 			.catch(err => next(err));
 	})
-	.put((req, res) => {
+	.put(authenticate.verifyUser, (req, res) => {
 		res.statusCode = 403;
 		res.end('PUT operation not supported on /campsites');
 	})
-	.delete((req, res, next) => {
+	.delete(authenticate.verifyUser, (req, res, next) => {
 		Campsite.deleteMany()
 			.then(response => {
 				res.statusCode = 200;
@@ -50,11 +51,11 @@ campsiteRouter.route('/:campsiteId')
 			})
 			.catch(err => next(err));
 	})
-	.post((req, res) => {
+	.post(authenticate.verifyUser, (req, res) => {
 		res.statusCode = 403; // forbidden
 		res.end(`POST operation not supported on /campsites/${req.params.campsiteId}`) // send a message back to the client
 	})
-	.put((req, res, next) => {
+	.put(authenticate.verifyUser, (req, res, next) => {
 		Campsite.findByIdAndUpdate(req.params.campsiteId, {
 			$set: req.body
 		}, { new: true })
@@ -65,7 +66,7 @@ campsiteRouter.route('/:campsiteId')
 			})
 			.catch(err => next(err));
 	})
-	.delete((req, res, next) => {
+	.delete(authenticate.verifyUser, (req, res, next) => {
 		Campsite.findByIdAndDelete(req.params.campsiteId)
 			.then(response => {
 				res.statusCode = 200;
@@ -93,7 +94,7 @@ campsiteRouter.route('/:campsiteId/comments')
 			})
 			.catch(err => next(err));
 	})
-	.post((req, res, next) => {
+	.post(authenticate.verifyUser, (req, res, next) => {
 		// create returns a promise
 		Campsite.findById(req.params.campsiteId)
 			.then(campsite => {
@@ -115,11 +116,11 @@ campsiteRouter.route('/:campsiteId/comments')
 			})
 			.catch(err => next(err));
 	})
-	.put((req, res) => {
+	.put(authenticate.verifyUser, (req, res) => {
 		res.statusCode = 403;
 		res.end(`PUT operation not supported on /campsites/${req.params.campsiteId}/comments`);
 	})
-	.delete((req, res, next) => {
+	.delete(authenticate.verifyUser, (req, res, next) => {
 		// mongoose static helper fn for Delete Operation
 		Campsite.findById(req.params.campsiteId)
 			// returns a Query object which is thenable thus allowing then fn chaining
@@ -178,11 +179,11 @@ campsiteRouter.route('/:campsiteId/comments/:commentId')
 			})
 			.catch(err => next(err));
 	})
-	.post((req, res) => {
+	.post(authenticate.verifyUser, (req, res) => {
 		res.statusCode = 403;
 		res.end(`POST operation not supported on /campsites/${req.params.campsiteId}/comments/${req.params.commentId}}`)
 	})
-	.put((req, res) => {
+	.put(authenticate.verifyUser, (req, res) => {
 		Campsite.findById(req.params.campsiteId)
 			.then(campsite => {
 				if (campsite && campsite.comments.id(req.params.commentId)) {
@@ -213,7 +214,7 @@ campsiteRouter.route('/:campsiteId/comments/:commentId')
 			})
 			.catch(err => next(err));
 	})
-	.delete((req, res, next) => {
+	.delete(authenticate.verifyUser, (req, res, next) => {
 		Campsite.findById(req.params.campsiteId)
 			.then(campsite => {
 				if (campsite && campsite.comments.id(req.params.commentId)) {

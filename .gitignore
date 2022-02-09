@@ -3,3 +3,5 @@ db.json
 snippets.js
 code-challenge.md
 sessions
+routes/users1.js
+authenticate1.js

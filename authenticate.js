@@ -1,20 +1,40 @@
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const User = require('./models/user');
+const JwtStrategy = require('passport-jwt').Strategy;
+const ExtractJwt = require('passport-jwt').ExtractJwt;
+const jwt = require('jsonwebtoken'); // used to create, sign, and verify tokens
 
-// Add the specific passport strategy
-// create a new instance of  Local Strategy 
-// LocalStrategy requires a verify cb function.
-// passport supports both session based as well as token based authenticate
-// User must be seriazlied and deserialized
-// Upon successful verification:  User data must be grabed from the session and added to the req object: deserialization must be used in order from this to be possible
-// When req obj gives us data and it must be stored serialization must happen
-// the autheticate method here is a verifyCallback fn
-// What is the underlying authentication mechanism here?
-// does it involve using shared secrets? e.g passwords?
-// does this provide cryptographic authentication? if so it would typically yield a user and a key afterwards using cryptographical verification of the credential.
-// the verify fn yeilds under one of three conditions: success, failure, or an error
-// static method on the model called authenticate that will be used as the verifyFunction for the LocalStrategy
+const config = require('./config.js');
+
 exports.local = passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
+
+exports.getToken = function (user) {
+    return jwt.sign(user, config.secretKey, { expiresIn: 3600 });
+};
+
+const opts = {};
+opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+opts.secretOrKey = config.secretKey;
+
+exports.jwtPassport = passport.use(
+    new JwtStrategy(
+        opts,
+        (jwt_payload, done) => {
+            console.log('JWT payload:', jwt_payload);
+            User.findOne({ _id: jwt_payload._id }, (err, user) => {
+                if (err) {
+                    return done(err, false);
+                } else if (user) {
+                    return done(null, user);
+                } else {
+                    return done(null, false);
+                }
+            });
+        }
+    )
+);
+
+exports.verifyUser = passport.authenticate('jwt', { session: false });
