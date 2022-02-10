@@ -5,3 +5,5 @@ code-challenge.md
 sessions
 routes/users1.js
 authenticate1.js
+bin/server.cert
+bin/server.key
