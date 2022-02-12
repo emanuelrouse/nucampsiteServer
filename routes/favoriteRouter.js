@@ -8,7 +8,7 @@ const favoriteRouter = express.Router();
 favoriteRouter.route('/')
     .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
     .get(cors.cors, authenticate.verifyUser, (req, res, next) => {
-        // When user does GET 
+        // When user does GET
         // Retrieve the favorite document for that user
         Favorite.find({ user: req.user._id })
             .populate('user')
@@ -21,8 +21,14 @@ favoriteRouter.route('/')
             .catch(err => next(err));
     })
     .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+        Favorite.findOne({ user: req.user._id })
+            .then(favorite => {
+                // Check which campsite in the req.body favorites array
+                // is there a campsite in the campsites array of the favorites document?
+                // if there is: add to the document campsites that aren't inside the array
+            })
         // [{"_id:"campsite ObjectId"}, ..., {"_id":"campsite ObjectId"}]
-        // in the body of the message 
+        // in the body of the message
         // check if the user has an associated favorite document
         // Favorite.findOne({user:req.user._id})
         // then check if favorite document exists
@@ -30,12 +36,12 @@ favoriteRouter.route('/')
         // if any, only add to the document those that are not already there
         // forEach, includes, and push can work
         // if no favoriate document for the user
-        // create a favorite document for the user 
+        // create a favorite document for the user
         // add the campsiteIDs from the req.body to the campsites array for the document
         // Save the favorite document
-        // set the response Content-Type header 
+        // set the response Content-Type header
         // Status code 200
-        // send the response back res.json(favorite) 
+        // send the response back res.json(favorite)
     })
 // .put()
 // .delete();
