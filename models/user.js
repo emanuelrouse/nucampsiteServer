@@ -15,7 +15,8 @@ const userSchema = new Schema({
     admin: {
         type: Boolean,
         default: false // ensures no falsy data gets passed
-    }
+    },
+    facebookId: String,
 });
 
 // use the method plugin on the Schema itself

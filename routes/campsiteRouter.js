@@ -1,12 +1,14 @@
 const express = require('express');
 const Campsite = require('../models/campsite');
 const authenticate = require('../authenticate');
+const cors = require('./cors')
 
 const campsiteRouter = express.Router();
 
 // each router will act like middleware and can be used as a callback arg for app.use
 campsiteRouter.route('/')
-	.get((req, res, next) => {
+	.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
+	.get(cors.cors, (req, res, next) => {
 		// find returns a query that you can use a .then function on it is NOT a promise
 		Campsite.find()
 			// tell the app that when campsites document are retrieved to populate the author field of the comments subdocument by finding the user document that matches the object id that's stored there
@@ -18,7 +20,7 @@ campsiteRouter.route('/')
 			})
 			.catch(err => next(err));
 	})
-	.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+	.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
 		// create returns a promise
 		Campsite.create(req.body)
 			.then(campsite => {
@@ -29,11 +31,11 @@ campsiteRouter.route('/')
 			})
 			.catch(err => next(err));
 	})
-	.put(authenticate.verifyUser, (req, res) => {
+	.put(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
 		res.statusCode = 403;
 		res.end('PUT operation not supported on /campsites');
 	})
-	.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+	.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
 		Campsite.deleteMany()
 			.then(response => {
 				res.statusCode = 200;
@@ -44,7 +46,8 @@ campsiteRouter.route('/')
 	});
 
 campsiteRouter.route('/:campsiteId')
-	.get((req, res, next) => {
+	.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
+	.get(cors.cors, (req, res, next) => {
 		Campsite.findById(req.params.campsiteId)
 			.populate('comments.author')
 			.then(campsite => {
@@ -54,11 +57,11 @@ campsiteRouter.route('/:campsiteId')
 			})
 			.catch(err => next(err));
 	})
-	.post(authenticate.verifyUser, (req, res) => {
+	.post(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
 		res.statusCode = 403; // forbidden
 		res.end(`POST operation not supported on /campsites/${req.params.campsiteId}`) // send a message back to the client
 	})
-	.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+	.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
 		Campsite.findByIdAndUpdate(req.params.campsiteId, {
 			$set: req.body
 		}, { new: true })
@@ -69,7 +72,7 @@ campsiteRouter.route('/:campsiteId')
 			})
 			.catch(err => next(err));
 	})
-	.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+	.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
 		Campsite.findByIdAndDelete(req.params.campsiteId)
 			.then(response => {
 				res.statusCode = 200;
@@ -80,7 +83,8 @@ campsiteRouter.route('/:campsiteId')
 	});
 
 campsiteRouter.route('/:campsiteId/comments')
-	.get((req, res, next) => {
+	.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
+	.get(cors.cors, (req, res, next) => {
 		// find returns a query that you can use a .then function on it is NOT a promise
 		Campsite.findById(req.params.campsiteId)
 			.populate('comments.author')
@@ -98,7 +102,7 @@ campsiteRouter.route('/:campsiteId/comments')
 			})
 			.catch(err => next(err));
 	})
-	.post(authenticate.verifyUser, (req, res, next) => {
+	.post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
 		// create returns a promise
 		Campsite.findById(req.params.campsiteId)
 			.then(campsite => {
@@ -122,11 +126,11 @@ campsiteRouter.route('/:campsiteId/comments')
 			})
 			.catch(err => next(err));
 	})
-	.put(authenticate.verifyUser, (req, res) => {
+	.put(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
 		res.statusCode = 403;
 		res.end(`PUT operation not supported on /campsites/${req.params.campsiteId}/comments`);
 	})
-	.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+	.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
 		// mongoose static helper fn for Delete Operation
 		Campsite.findById(req.params.campsiteId)
 			// returns a Query object which is thenable thus allowing then fn chaining
@@ -163,7 +167,8 @@ campsiteRouter.route('/:campsiteId/comments')
 
 // /:campsiteId/comments/:commentId Endpoints
 campsiteRouter.route('/:campsiteId/comments/:commentId')
-	.get(authenticate.verifyUser, (req, res, next) => {
+	.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
+	.get(cors.cors, authenticate.verifyUser, (req, res, next) => {
 		// find returns a query that you can use a .then function on it is NOT a promise
 		Campsite.findById(req.params.campsiteId)
 			.populate('comments.author')
@@ -187,11 +192,11 @@ campsiteRouter.route('/:campsiteId/comments/:commentId')
 			})
 			.catch(err => next(err));
 	})
-	.post(authenticate.verifyUser, (req, res) => {
+	.post(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
 		res.statusCode = 403;
 		res.end(`POST operation not supported on /campsites/${req.params.campsiteId}/comments/${req.params.commentId}}`)
 	})
-	.put(authenticate.verifyUser, (req, res) => {
+	.put(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
 		Campsite.findById(req.params.campsiteId)
 			.then(campsite => {
 				if (campsite && campsite.comments.id(req.params.commentId)) {
@@ -229,7 +234,7 @@ campsiteRouter.route('/:campsiteId/comments/:commentId')
 			})
 			.catch(err => next(err));
 	})
-	.delete(authenticate.verifyUser, (req, res, next) => {
+	.delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
 		Campsite.findById(req.params.campsiteId)
 			.then(campsite => {
 				if (campsite && campsite.comments.id(req.params.commentId)) {

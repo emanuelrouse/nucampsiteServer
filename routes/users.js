@@ -2,10 +2,11 @@ const express = require('express');
 const User = require('../models/user');
 const passport = require('passport');
 const authenticate = require('../authenticate');
+const cors = require('./cors');
 
 const router = express.Router();
 
-router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+router.options(cors.corsWithOptions, (req, res) => res.sendStatus(200)).get('/', cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
   User.find()
     .then(users => {
       res.statusCode = 200;
@@ -16,7 +17,7 @@ router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, (req, res, ne
 
 });
 
-router.post('/signup', (req, res) => {
+router.options(cors.corsWithOptions, (req, res) => res.sendStatus(200)).post('/signup', cors.corsWithOptions, (req, res) => {
   User.register(
     new User({ username: req.body.username }),
     // ideally the front end would be set up so that the info will be sent from the client
@@ -50,7 +51,7 @@ router.post('/signup', (req, res) => {
     }
   );
 });
-router.post('/login', passport.authenticate('local'), (req, res) => {
+router.options(cors.corsWithOptions, (req, res) => res.sendStatus(200)).post('/login', passport.authenticate('local'), (req, res) => {
   const token = authenticate.getToken({ _id: req.user._id });
   res.statusCode = 200;
   res.setHeader('Content-Type', 'application/json');
@@ -59,7 +60,7 @@ router.post('/login', passport.authenticate('local'), (req, res) => {
 
 router.get('/logout', (req, res, next) => {
   if (req.session) {
-    //       // delete session file on server side
+    // delete session file on server side
     req.session.destroy();
     // express method on response object passing session id: clears cookie that's stored in the client
     res.clearCookie('session-id');
@@ -72,5 +73,14 @@ router.get('/logout', (req, res, next) => {
     return next(err);
   }
 })
+
+router.get('/facebook/token', passport.authenticate('facebook-token'), (req, res) => {
+  if (req.user) {
+    const token = authenticate.getToken({ _id: req.user._id });
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.json({ success: true, token: token, status: 'You are successfully logged in!' });
+  }
+});
 
 module.exports = router;
