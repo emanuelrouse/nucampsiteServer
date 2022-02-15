@@ -11,9 +11,11 @@ campsiteRouter.route('/')
 	.get(cors.cors, (req, res, next) => {
 		// find returns a query that you can use a .then function on it is NOT a promise
 		Campsite.find()
-			// tell the app that when campsites document are retrieved to populate the author field of the comments subdocument by finding the user document that matches the object id that's stored there
+			// tell the app that when campsites document is retrieved to populate the author field of the comments subdocument by finding the user document that matches the object id that's stored there
+			// Why do we want to populate on get requests since it's just a read only action? Wouldn't it make more sense to populate on post?
 			.populate('comments.author')
 			.then(campsites => {
+				console.log(campsites[0].comments[0].author);
 				res.statusCode = 200;
 				res.setHeader('Content-Type', 'application/json');
 				res.json(campsites);
